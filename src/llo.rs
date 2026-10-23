@@ -1,4 +1,5 @@
 use num_complex::Complex;
+use crate::bp::normalize;
 
 pub fn llo<const SZ_MSG: usize>(out: &mut Vec<Vec<Complex<f64>>>, inp: Vec<Vec<Complex<f64>>>) {
     let mut acc_fwd = inp.first().unwrap().clone();
@@ -48,6 +49,7 @@ pub fn llo_prior<const SZ_MSG: usize>(
             .iter_mut()
             .zip(inp[current_fac_node][rel_var_node].iter())
             .for_each(|(o, a)| *o *= a);
+        normalize(&mut acc_fwd);
     }
     for j in (0..nfac).rev() {
         let current_fac_node = connections_var[j];
@@ -60,5 +62,6 @@ pub fn llo_prior<const SZ_MSG: usize>(
             .iter_mut()
             .zip(inp[current_fac_node][rel_var_node].iter())
             .for_each(|(o, a)| *o *= a);
+        normalize(&mut acc_bwd);
     }
 }

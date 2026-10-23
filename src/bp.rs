@@ -84,7 +84,24 @@ impl<const SZ_MSG: usize> BP<SZ_MSG, ProbValueRhs<SZ_MSG>> {
         let rhs_rhs = rhs
             .into_iter()
             .zip(p.into_iter())
-            .map(|(x, p)| ProbValueRhs { p: p, values: x })
+            .map(|(x, p)| ProbValueRhs { p, values: x })
+            .collect();
+        Self::initialize(prior, coeff, rhs_rhs, chk_sz)
+    }
+}
+
+impl<const SZ_MSG: usize> BP<SZ_MSG, IneqRhs<SZ_MSG>> {
+    pub fn initialize_ineq(
+        prior: [f64; SZ_MSG],
+        coeff: Vec<Vec<i32>>,
+        rhs: Vec<(i32, i32)>,
+        p: Vec<f64>,
+        chk_sz: Option<Vec<usize>>,
+    ) -> Self {
+        let rhs_rhs = rhs
+            .into_iter()
+            .zip(p.into_iter())
+            .map(|(x, p)| IneqRhs { p, low: x.0, high: x.1 })
             .collect();
         Self::initialize(prior, coeff, rhs_rhs, chk_sz)
     }
@@ -147,7 +164,7 @@ impl<const SZ_MSG: usize, RHS: Rhs<SZ_MSG> + Sync> BP<SZ_MSG, RHS> {
             for coeff_i in &coeff {
                 let mut sum = 0;
                 for c in coeff_i {
-                    sum += c.abs() as usize * SZ_MSG / 2;
+                    sum += c.abs() as usize * (SZ_MSG / 2);
                 }
                 sums_lens.push(f64::log2(sum as f64).ceil() as usize + 1);
             }
@@ -187,6 +204,7 @@ impl<const SZ_MSG: usize, RHS: Rhs<SZ_MSG> + Sync> BP<SZ_MSG, RHS> {
                     for k in 0..SZ_MSG {
                         res[k] *= self.fac_results[*j][self.connections_fac_inv[*j][i]][k];
                     }
+                    normalize(&mut res);
                 }
                 for k in 0..SZ_MSG {
                     res[k] *= self.prior[k];
@@ -206,6 +224,7 @@ impl<const SZ_MSG: usize, RHS: Rhs<SZ_MSG> + Sync> BP<SZ_MSG, RHS> {
                     for k in 0..SZ_MSG {
                         res[k] *= self.fac_results[*j][self.connections_fac_inv[*j][i]][k];
                     }
+                    normalize(&mut res);
                 }
                 for k in 0..SZ_MSG {
                     res[k] *= self.prior[k];
